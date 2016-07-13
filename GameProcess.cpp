@@ -115,11 +115,28 @@ void drawCube() {
 
 	glEnd();
 }
+vector3 takeVectorTranslate(){
+	vector3 offset;
+	offset.x=snake[0].x-camera->getPosition().x;
+	offset.y=7;
+	offset.z=15;
 
+	return offset;
+}
 void GameProcess::Draw(void) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(255, 255, 255, 1.0);
+	camera->setPosition(vector3 { 10, 30, 21 });
+	glLoadIdentity();
+	glMatrixMode(GL_PROJECTION);
+	//glLoadIdentity();
 
+	glTranslatef(0, 0, 0);
+	/*gluLookAt(camera->getPosition().x,
+	 camera->getPosition().y,
+	 camera->getPosition().z,
+	 (float) N / 2.0, 0, -(float) M / 2.0, 0, 1, 0);
+	 */
 	glMatrixMode(GL_MODELVIEW);
 
 	DrawGrid();
@@ -143,6 +160,7 @@ void GameProcess::Draw(void) {
 		glLoadIdentity();
 		glTranslatef((float) eat.x, -1.0f, -(float) eat.y);
 		drawCube();
+
 	}
 	/*
 	 //DRAWING
@@ -188,10 +206,9 @@ int intersectSnakeWithHimSelf() {
 
 void restartSnake() {
 
-	if (intersectSnakeWithHimSelf()!=-1) {
+	if (intersectSnakeWithHimSelf() != -1) {
 
-		num=intersectSnakeWithHimSelf();
-
+		num = intersectSnakeWithHimSelf();
 
 	}
 }
@@ -230,6 +247,7 @@ void GameProcess::Update() {
 			<< camera->getPosition().y << " " << camera->getPosition().z
 			<< endl;
 	//cout << "EAT " << eat.x << " " << eat.y << endl;
+
 }
 
 void GameProcess::Init(int argc, char **argv) {
@@ -335,3 +353,4 @@ void GameProcess::checkIntersects() {
 		placeEat();
 	}
 }
+
