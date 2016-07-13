@@ -40,7 +40,7 @@ private:
 	static void KeyboardUpWrapper(unsigned char key,int x,int y);
 	static void Timer(int);
 	static void TimerUpdate(int);
-
+	static void Reshape(int w,int h);
 	static void checkIntersects();
 	static void placeEat();
 

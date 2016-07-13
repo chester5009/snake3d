@@ -48,9 +48,12 @@ GameProcess::~GameProcess() {
 }
 
 void DrawGrid() {
+
 	for (int i = 0; i < N; ++i) {
 		for (int j = 0; j < M; ++j) {
-			glLoadIdentity();
+
+			//glLoadIdentity();
+			glPushMatrix();
 			glTranslatef((float) i, -1.0f, -(float) j); // Move right and into the screen
 
 			glBegin(GL_QUADS);      // Begin drawing the color cube with 6 quads
@@ -65,6 +68,7 @@ void DrawGrid() {
 			glVertex3f(-0.5f, 0.0f, 0.5f);
 
 			glEnd();
+			glPopMatrix();
 		}
 
 	}
@@ -72,9 +76,16 @@ void DrawGrid() {
 }
 void changeCamera() {
 	vector3 newPos = camera->getPosition();
-	newPos.x += 0.013f;
+	if(snake[0].x-0.8>newPos.x)newPos.x+=0.7;
+	else if(snake[0].x+0.8<newPos.x) newPos.x-=0.7;
+	//newPos.x = snake[0].x;
 	camera->setPosition(newPos);
 
+	vector3 newLook = camera->getLookAt();
+	newLook.y=0.0f;
+	newLook.z=-(float) M / 2.0;
+	newLook.x = newPos.x;
+	camera->setLookAt(newLook);
 	//glMatrixMode(GL_PROJECTION);
 	//glLoadIdentity();
 	//gluLookAt(camera->getPosition().x,camera->getPosition().y,camera->getPosition().z,0,0,0,0,1,0);
@@ -115,33 +126,54 @@ void drawCube() {
 
 	glEnd();
 }
-vector3 takeVectorTranslate(){
-	vector3 offset;
-	offset.x=snake[0].x-camera->getPosition().x;
-	offset.y=7;
-	offset.z=15;
 
-	return offset;
-}
+float angle = 0.0f;
 void GameProcess::Draw(void) {
+	// Clear Color and Depth Buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glClearColor(255, 255, 255, 1.0);
-	camera->setPosition(vector3 { 10, 30, 21 });
-	glLoadIdentity();
-	glMatrixMode(GL_PROJECTION);
-	//glLoadIdentity();
 
-	glTranslatef(0, 0, 0);
-	/*gluLookAt(camera->getPosition().x,
+	// Reset transformations
+	glLoadIdentity();
+	// Set the camera
+	vector3 campos = camera->getPosition();
+	vector3 camLook = camera->getLookAt();
+	gluLookAt(campos.x, campos.y, campos.z,
+			camLook.x, camLook.y,camLook.z,
+			0, 1, 0);
+	glPushMatrix();
+	glRotatef(angle, 0.0f, 1.0f, 0.0f);
+
+	glBegin(GL_TRIANGLES);
+	glVertex3f(-2.0f, -2.0f, 0.0f);
+	glVertex3f(2.0f, 0.0f, 0.0);
+	glVertex3f(0.0f, 2.0f, 0.0);
+	glEnd();
+	glPopMatrix();
+
+	//glPushMatrix();
+	DrawGrid();
+	//glPopMatrix();
+
+	/*glLoadIdentity();
+	 vector3 campos=camera->getPosition();
+	 gluLookAt(0,0,10, (float) N / 2.0, 0,
+	 -(float) M / 2.0, 0, 1, 0);
+
+
+
+	 //glTranslatef(0, 0, 0);
+	 gluLookAt(camera->getPosition().x,
 	 camera->getPosition().y,
 	 camera->getPosition().z,
 	 (float) N / 2.0, 0, -(float) M / 2.0, 0, 1, 0);
-	 */
-	glMatrixMode(GL_MODELVIEW);
 
-	DrawGrid();
+	 */
+	//glPushMatrix();
+	//glPopMatrix();
+	//DRAW SNAKE
 	for (int i = 0; i < num; ++i) {
-		glLoadIdentity();
+		//glLoadIdentity();
+		glPushMatrix();
 		glTranslatef((float) snake[i].x, -1.0f, -(float) snake[i].y);
 		if (i == 0)
 			glColor3f(1, 0, 0);
@@ -154,14 +186,20 @@ void GameProcess::Draw(void) {
 		}
 
 		drawCube();
-
-		//Draw Eat
-		glColor3f(0, 0, 1);
-		glLoadIdentity();
-		glTranslatef((float) eat.x, -1.0f, -(float) eat.y);
-		drawCube();
+		glPopMatrix();
 
 	}
+
+	//Draw Eat
+	glPushMatrix();
+	glColor3f(0, 0, 1);
+	//glLoadIdentity();
+
+	glTranslatef((float) eat.x, -1.0f, -(float) eat.y);
+	glRotatef(angle, 0.0f, 1.0f, 0.0f);
+	drawCube();
+	glPopMatrix();
+
 	/*
 	 //DRAWING
 	 glVertexPointer(3, GL_FLOAT, sizeof(SVertex), a);
@@ -187,7 +225,9 @@ void GameProcess::Draw(void) {
 	 glColor3f(1, 0, 0);
 	 glRectf(eat.x * Scale, eat.y * Scale, (eat.x + 1) * Scale,
 	 (eat.y + 1) * Scale);
+
 	 */
+	angle += 1.5f;
 
 	glutSwapBuffers();
 
@@ -242,10 +282,11 @@ void GameProcess::Update() {
 		snake[0].y = M - 1;
 
 	checkIntersects();
-	changeCamera();
+	//changeCamera();
 	cout << "Camera x: " << camera->getPosition().x << " "
 			<< camera->getPosition().y << " " << camera->getPosition().z
 			<< endl;
+	changeCamera();
 	//cout << "EAT " << eat.x << " " << eat.y << endl;
 
 }
@@ -263,31 +304,32 @@ void GameProcess::Init(int argc, char **argv) {
 	placeEat();
 	camera = new Camera((float) N / 2.0, 15, 22);
 	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowSize(w, h);
 	glutInitWindowPosition(100, 100);
 
 	glutCreateWindow("Game_Snake");
 
 	cout << "Sozdano" << endl;
-	glViewport(0, 0, w, h);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(45.0f, (float) w / (float) h, 0.1, 1000);
+	//glViewport(0, 0, w, h);
+	//glMatrixMode(GL_PROJECTION);
+	//glLoadIdentity();
+	//gluPerspective(45.0f, (float) w / (float) h, 0.1, 1000);
 	vector3 campos = camera->getPosition();
-	gluLookAt(campos.x, campos.y, campos.z, (float) N / 2.0, 0,
-			-(float) M / 2.0, 0, 1, 0);
-	glMatrixMode(GL_MODELVIEW);
+	//gluLookAt(campos.x, campos.y, campos.z, (float) N / 2.0, 0,
+	//		-(float) M / 2.0, 0, 1, 0);
+	//glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+
+	glutDisplayFunc(Draw);
+	glutReshapeFunc(Reshape);
+	glutTimerFunc(60, Timer, 0);
+	glutTimerFunc(60, TimerUpdate, 0);
 
 	glEnable(GL_DEPTH_TEST);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
-
-	glutDisplayFunc(Draw);
-	glutTimerFunc(60, Timer, 0);
-	glutTimerFunc(60, TimerUpdate, 0);
 
 	glutKeyboardFunc(KeyboardWrapper);
 	glutKeyboardUpFunc(KeyboardUpWrapper);
@@ -315,7 +357,7 @@ void GameProcess::Timer(int t) {
 
 	Draw();
 
-	glutTimerFunc(1000 / 60, Timer, 0);
+	glutTimerFunc(1000.0f / 100.0f, Timer, 0);
 }
 
 bool isIntersected(int x, int y) {
@@ -330,6 +372,22 @@ bool isIntersected(int x, int y) {
 void GameProcess::TimerUpdate(int t) {
 	Update();
 	glutTimerFunc(80, TimerUpdate, 0);
+}
+
+void GameProcess::Reshape(int w, int h) {
+	if (h == 0) {
+		h = 1;
+	}
+	float ration = w * 1.0 / h;
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+	glViewport(0, 0, w, h);
+
+	gluPerspective(45.0f, ration, 0.1, 1000);
+
+	glMatrixMode(GL_MODELVIEW);
 }
 
 void GameProcess::placeEat() {
